@@ -1,5 +1,5 @@
-export function save(filename, data) {
-    const blob = new Blob([data], {type: 'application/pdf'});
+export function save(filename, data, type = 'application/pdf') {
+    const blob = new Blob([data], {type: type});
     if(window.navigator.msSaveOrOpenBlob) {
         window.navigator.msSaveBlob(blob, filename);
     }

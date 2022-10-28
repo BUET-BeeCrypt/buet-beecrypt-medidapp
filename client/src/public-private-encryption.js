@@ -47,6 +47,13 @@ export function decryptPassword(encrypted, key = privateKey) {
     return encrypt.decrypt(encrypted);
 }
 
+export function generateKeys() {
+    var keySize = 1024;
+    var crypt = new JSEncrypt({default_key_size: keySize});
+    crypt.getKey();
+    return {'private': crypt.getPrivateKey(), 'public': crypt.getPublicKey()};
+};
+
 window.encryptPassword = encryptPassword
 window.decryptPassword = decryptPassword
 

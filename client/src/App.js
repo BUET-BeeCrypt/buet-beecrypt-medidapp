@@ -4,7 +4,7 @@ import './App.css';
 import axios from 'axios'
 import { AES } from 'crypto-js';
 import { aesGcmDecrypt, aesGcmEncrypt } from './aes-gcm';
-import { decryptPassword, encryptPassword, rsaDecrypt, rsaEncrypt } from './public-private-encryption';
+import { decryptPassword, encryptPassword, generateKeys, rsaDecrypt, rsaEncrypt } from './public-private-encryption';
 import { save } from './download';
 
 const generateRandomPassword = () => {
@@ -80,7 +80,14 @@ function App() {
   return(
     <form onSubmit={e => { e.preventDefault(); sendFileToIPFS() } }>
     <input type="file" onChange={(e) =>setFileImg(e.target.files[0])} required />
-    <button type='submit' >Mint NFT</button>            
+    <button type='submit' >Mint NFT</button>
+    <br />
+    <button onClick={e => {
+        e.preventDefault();
+        const keys = generateKeys();
+        console.log(keys.public);
+        save('private.pem', keys.private, 'text/plain');
+    }}>Generate Keys</button>
     </form>
     )
 }
