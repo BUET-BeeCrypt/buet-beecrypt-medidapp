@@ -30,10 +30,10 @@ function App() {
 
             const password = generateRandomPassword();
 
-            // const encryptedPassword = rsaEncrypt(password);
-            // console.log(`Encrypted Password: ${encryptedPassword}`);
-            // const decryptedPassword = rsaDecrypt(encryptedPassword);
-            // console.log(`Decrypted Password: ${decryptedPassword}`);
+            const encryptedPassword = encryptPassword(password);
+            console.log(`Encrypted Password: ${encryptedPassword}`);
+            const decryptedPassword = decryptPassword(encryptedPassword);
+            console.log(`Decrypted Password: ${decryptedPassword}`);
             
             let reader = new FileReader();
             reader.readAsArrayBuffer(fileImg);
@@ -49,11 +49,6 @@ function App() {
 
                 save(fileImg.name, decryptedFile);
             }
-
-            // const encryptedBuffer = aes256.encrypt(password, buffer);
-            
-            // AES.encrypt(buffer, password).toString();
-            // console.log(encryptedBuffer);
 
             const formData = new FormData();
             formData.append("file", fileImg); 
