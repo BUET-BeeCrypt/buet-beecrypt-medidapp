@@ -2,6 +2,8 @@ import logo from './logo.svg';
 import { useState } from 'react';
 import './App.css';
 import axios from 'axios'
+import { AES } from 'crypto-js';
+import { aesGcmDecrypt, aesGcmEncrypt } from './aes-gcm';
 
 const generateRandomPassword = () => {
     let chars = "0123456789abcdefghijklmnopqrstuvwxyz!@#$%^&*()ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -23,6 +25,19 @@ function App() {
         try {
 
             const password = generateRandomPassword();
+            let reader = new FileReader();
+            reader.readAsArrayBuffer(fileImg);
+            reader.onloadend = async () => {
+                console.log(reader.result);
+                const encrypted = await aesGcmEncrypt(reader.result, password)
+                console.log(encrypted);
+                const decrypted = await aesGcmDecrypt(encrypted, password);
+                console.log(decrypted);
+
+                const decryptedFile = new File([decrypted], fileImg.name, {type: fileImg.type});
+                console.log(decryptedFile);
+            }
+
             // const encryptedBuffer = aes256.encrypt(password, buffer);
             
             // AES.encrypt(buffer, password).toString();
