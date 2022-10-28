@@ -17,6 +17,8 @@ enum State {
 struct Document {
   string fileName;
   string fileCID;
+  string fileKey;
+  string fileHash;
   address owner;
   enum MediDocContract.State state;
   uint256 timestamp;
@@ -29,16 +31,22 @@ struct Document {
 mapping(address => mapping(string => struct MediDocContract.Document)) user_documents
 ```
 
-### FileUpload
+### FileUploadLog
 
 ```solidity
-event FileUpload(string fileCID, string fileKey, address owner)
+event FileUploadLog(string fileCID, address creator, address owner)
 ```
 
 ### addDocument
 
 ```solidity
-function addDocument(string fileName, string fileCID) public
+function addDocument(string fileName, string fileCID, string fileKey, string fileHash, address ownerAddress) public
+```
+
+### getDocument
+
+```solidity
+function getDocument(string fileHash) public view returns (struct MediDocContract.Document)
 ```
 
 ### verify
@@ -65,6 +73,12 @@ function isVerified2(address owner, string fileCID) public view returns (bool)
 
 ```solidity
 mapping(address => string) keys
+```
+
+### LogUser
+
+```solidity
+event LogUser(address user)
 ```
 
 ### addKey

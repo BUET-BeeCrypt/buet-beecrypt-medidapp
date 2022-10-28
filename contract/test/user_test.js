@@ -41,7 +41,7 @@ nrJJOdeAtOZ8jtiVAgMBAAE =\n\
 
         const [owner, otherAccount] = await ethers.getSigners();
 
-        console.table([owner ,otherAccount]);
+        //console.table([owner ,otherAccount]);
 
         // assert that the value is correct
         expect(await userContract.connect(otherAccount).getKey(owner.address)).to.equal(pkey);

@@ -10,6 +10,8 @@ npx hardhat test
 REPORT_GAS=true npx hardhat test
 npx hardhat node
 npx hardhat run scripts/deploy.js
+npx hardhat docgen
+npx hardhat compile
 ```
 
 ## Related link
