@@ -15,7 +15,7 @@ import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
 import { FileUploader } from "react-drag-drop-files";
 import { getHash } from "./sha256";
-import { Alert, Button, Card, Col, Row } from "react-bootstrap";
+import { Alert, Button, Card, Col, Form, InputGroup, Row } from "react-bootstrap";
 
 const generateRandomPassword = () => {
   let chars =
@@ -125,13 +125,57 @@ function App() {
         // Call to Ethereum to store the fileCID, fileName, doctorEncryptedPassword, sharedWith
     }
 
+    let selectedFile = null;
+
+    const issueDocument = async e => {
+        const ownerAddress = document.getElementById("owner-address").value;
+        const fileDocument = selectedFile;
+        if (!fileDocument || !ownerAddress)
+            return;
+        
+        const password = generateRandomPassword();
+        const encryptedPassword = encryptPassword(password, await getPublicKey(ownerAddress));
+
+        let reader = new FileReader();
+
+        reader.onloadend = async () => {
+            const encrypted = await aesGcmEncrypt(reader.result, password);
+            
+            const encryptedFile = new File([new Blob([encrypted], { type: 'text/plain' })], fileDocument.name, {
+                type: fileDocument.type,
+            });
+
+            const formData = new FormData();
+            formData.append("file", encryptedFile);
+
+            const resFile = await axios({
+                method: "post",
+                url: "https://api.pinata.cloud/pinning/pinFileToIPFS",
+                data: formData,
+                headers: {
+                    'pinata_api_key': `81852fb3d69cda1abf17`, // ${process.env.REACT_APP_PINATA_API_KEY}
+                    'pinata_secret_api_key': `d0621cab7ea068f42c4c150be07b14a99a91be4f4de700fe82746704e12acbf6`, // ${process.env.REACT_APP_PINATA_API_SECRET}
+                    "Content-Type": "multipart/form-data"
+                },
+            });
+
+            const CID = `${resFile.data.IpfsHash}`;
+
+            console.log({ CID, fileName: fileDocument.name, encryptedPassword, ownerAddress });
+
+            // Call to Ethereum to store the CID, fileName, encryptedPassword, ownerAddress
+        };
+
+        reader.readAsArrayBuffer(selectedFile);
+        
+    }
+
     // REGISTER USER
     const registerUser = async e => {
         const keys = generateKeys();
         console.log(keys.public);
         save("private-key-medidapp.pem", keys.private, "text/plain");
     }
-
 
     const [fileVerificationInfo, setFileVerificationInfo] = useState(null);
     // VERIFY FILE
@@ -191,7 +235,7 @@ function App() {
                     <Row>
                         <Col>
                             <Alert>
-                                Provide your private to download or share a document
+                                Provide your private key to download or share a document
                             </Alert>
                         </Col>
                         <Col className={'mt-1'}>
@@ -264,16 +308,79 @@ function App() {
 
             {userType === "doctor" && <>
                 {selectedTab === "home" && <>
+                    <h1 className="mb-5">Issue Document</h1>
+                    
+                    <InputGroup className="mb-5">
+                        <InputGroup.Text id="#owner-address">
+                        Owner Address
+                        </InputGroup.Text>
+                        <Form.Control id="basic-url" aria-describedby="basic-addon3" />
+                    </InputGroup>
 
+                    <Row className={'mt-5'}>
+                        <Col className={'col-6'}>
+                            <FileUploader handleChange={(f) => { selectedFile = f; }} name="file" types={['pdf']}
+                                label='Select File to Issue'/>
+                        </Col>
+                        <Col className={'col-6'}>
+                            <div className="d-grid gap-2 d-md-flex justify-content-md-end pt-1">
+                                <Button variant="primary" onClick={issueDocument}>Issue Document</Button>
+                            </div>
+                        </Col>
+                    </Row>
+                    
                 </>}
                 {selectedTab === "shared" && <>
+                    <h1 className="mb-5">Shared with me</h1>
 
+                    <Row>
+                        <Col>
+                            <Alert>
+                                Provide your private key to download a document
+                            </Alert>
+                        </Col>
+                        <Col className={'mt-1'}>
+                            <FileUploader label='Open Private Key' handleChange={ file => {
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                    setUserPrivateKey(reader.result);
+                                }
+                                reader.readAsText(file);
+                            }} name="file" types={['pem']}/>
+                        </Col>
+                    </Row>
+
+                    <Row>
+                        { userDocuments.map((document) => ( <d className="col-6 p-3">
+                        <Card className="text-center"> 
+                        <Card.Header>Owner</Card.Header>
+                            <Card.Body>
+                                <Card.Title>Document Title</Card.Title>
+                                {/* <Card.Text>
+                                    Hash: hash
+                                </Card.Text> */}
+
+                                <Button variant="primary" className={`mx-2`} disabled={!userPrivateKey} onClick={e => {
+                                    e.target.disabled = true;
+                                    downloadFileDecrypted('', '', '').then(b => {
+                                        e.target.disabled = false;
+                                    }).catch(b => {
+                                        e.target.disabled = false;
+                                    })
+                                }}>Download</Button>
+
+                            </Card.Body>
+                            <Card.Footer className="text-muted">Timestamp Vaule</Card.Footer>
+                        </Card>
+                        </d>)) }
+                    </Row>
                 </>}
             </>}
 
             {selectedTab === "verify" &&
                 <>
-                    <FileUploader handleChange={fileVerificationFileSelected} name="file" types={['pdf']}/>
+                    <FileUploader handleChange={fileVerificationFileSelected} name="file" types={['pdf']}
+                        label='Upload File to Verify'/>
 
                     {fileVerificationInfo && <>
                         <Card className='mt-5'>
@@ -316,7 +423,7 @@ function App() {
             }
 
         </Container>
-        
+
         </>
     );
 }
