@@ -65,6 +65,6 @@
         // const plaintext = new TextDecoder().decode(plainBuffer);                       // plaintext from ArrayBuffer
         // return plaintext;                                                              // return the plaintext
     } catch (e) {
-        throw new Error('Decrypt failed');
+        console.log(e);
     }
 }

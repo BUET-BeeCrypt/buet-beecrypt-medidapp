@@ -31,58 +31,58 @@ const generateRandomPassword = () => {
 };
 
 function App() {
-    const [fileDocument, setFileDocument] = useState(null);
-    const sendFileToIPFS = async (e) => {
-        if (fileDocument) {
-        try {
-            const password = generateRandomPassword();
+    // const [fileDocument, setFileDocument] = useState(null);
+    // const sendFileToIPFS = async (e) => {
+    //     if (fileDocument) {
+    //     try {
+    //         const password = generateRandomPassword();
 
-            const encryptedPassword = encryptPassword(password);
-            console.log(`Encrypted Password: ${encryptedPassword}`);
-            const decryptedPassword = decryptPassword(encryptedPassword);
-            console.log(`Decrypted Password: ${decryptedPassword}`);
+    //         const encryptedPassword = encryptPassword(password);
+    //         console.log(`Encrypted Password: ${encryptedPassword}`);
+    //         const decryptedPassword = decryptPassword(encryptedPassword);
+    //         console.log(`Decrypted Password: ${decryptedPassword}`);
 
-            let reader = new FileReader();
-            reader.readAsArrayBuffer(fileDocument);
-            reader.onloadend = async () => {
-            console.log(reader.result);
-            const encrypted = await aesGcmEncrypt(reader.result, password);
-            console.log(encrypted);
-            const decrypted = await aesGcmDecrypt(encrypted, password);
-            console.log(decrypted);
+    //         let reader = new FileReader();
+    //         reader.readAsArrayBuffer(fileDocument);
+    //         reader.onloadend = async () => {
+    //         console.log(reader.result);
+    //         const encrypted = await aesGcmEncrypt(reader.result, password);
+    //         console.log(encrypted);
+    //         const decrypted = await aesGcmDecrypt(encrypted, password);
+    //         console.log(decrypted);
 
-            const decryptedFile = new File([decrypted], fileDocument.name, {
-                type: fileDocument.type,
-            });
-            console.log(decryptedFile);
+    //         const decryptedFile = new File([decrypted], fileDocument.name, {
+    //             type: fileDocument.type,
+    //         });
+    //         console.log(decryptedFile);
 
-            save(fileDocument.name, decryptedFile);
-            };
+    //         save(fileDocument.name, decryptedFile);
+    //         };
 
-            const formData = new FormData();
-            formData.append("file", fileDocument);
+    //         const formData = new FormData();
+    //         formData.append("file", fileDocument);
 
-            /*const resFile = await axios({
-                    method: "post",
-                    url: "https://api.pinata.cloud/pinning/pinFileToIPFS",
-                    data: formData,
-                    headers: {
-                        'pinata_api_key': `81852fb3d69cda1abf17`, // ${process.env.REACT_APP_PINATA_API_KEY}
-                        'pinata_secret_api_key': `d0621cab7ea068f42c4c150be07b14a99a91be4f4de700fe82746704e12acbf6`, // ${process.env.REACT_APP_PINATA_API_SECRET}
-                        "Content-Type": "multipart/form-data"
-                    },
-                });
+    //         /*const resFile = await axios({
+    //                 method: "post",
+    //                 url: "https://api.pinata.cloud/pinning/pinFileToIPFS",
+    //                 data: formData,
+    //                 headers: {
+    //                     'pinata_api_key': `81852fb3d69cda1abf17`, // ${process.env.REACT_APP_PINATA_API_KEY}
+    //                     'pinata_secret_api_key': `d0621cab7ea068f42c4c150be07b14a99a91be4f4de700fe82746704e12acbf6`, // ${process.env.REACT_APP_PINATA_API_SECRET}
+    //                     "Content-Type": "multipart/form-data"
+    //                 },
+    //             });
 
-                const ImgHash = `ipfs://${resFile.data.IpfsHash}`;
-            console.log(ImgHash);
-        //Take a look at your Pinata Pinned section, you will see a new file added to you list.
-                */
-        } catch (error) {
-            console.log("Error sending File to IPFS: ");
-            console.log(error);
-        }
-        }
-    };
+    //             const ImgHash = `ipfs://${resFile.data.IpfsHash}`;
+    //         console.log(ImgHash);
+    //     //Take a look at your Pinata Pinned section, you will see a new file added to you list.
+    //             */
+    //     } catch (error) {
+    //         console.log("Error sending File to IPFS: ");
+    //         console.log(error);
+    //     }
+    //     }
+    // };
 
     const [userType, setUserType] = useState("user");
 
@@ -93,7 +93,12 @@ function App() {
     }
 
     const [userPrivateKey, setUserPrivateKey] = useState(null);
-    const [userDocuments, setUserDocuments] = useState([]);
+    const [userDocuments, setUserDocuments] = useState([{
+        "CID": "QmfSEr2kDfAFp45BGZS2DQwJEy7gwwUfqwxM3hWNDKcBsY",
+        "fileName": "LLTemplates.pdf",
+        "encryptedPassword": "Src92Nncdfzc3+mW3sVO2cwI61k5G9GBIUOF7e1dZQiAaWmN0ScoklLZbA4keH3/okCFDkMY6vKq0nnuHt8AItN3QYrC22kPhhSRxUF8LMYjWscsW5C3oELfU2Ayu2Be247QgyeeVa2GpwOKHfyXGfSFc+IgVTQ41awWNPC1Teg=",
+        "ownerAddress": "1234"
+    }]);
 
     const downloadFileDecrypted = async (fileCID, fileName, encryptedPassword) => {
         try {
@@ -102,6 +107,7 @@ function App() {
                 //     'Content-Type': 'application/pdf'
                 // }}
             );
+            
             const decryptedPassword = decryptPassword(encryptedPassword, userPrivateKey);
             const decryptedFile = await aesGcmDecrypt(response.data, decryptedPassword);
             // const decryptedFile = response.data;
@@ -113,7 +119,12 @@ function App() {
     }
 
     const getPublicKey = async (user) => {
-        return "";
+        return `-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCFO7F4SAYvt12HO3SgwR+/y7nl
+SYrTZU/gwvnN44euwjghqOAsYHWezlTM7XIF4p5ONdgXHdwdjkZp0u/lsQXHFbyJ
+mYTYLVgTJlbPY1wdrsFEmkIJsDaZDe+Xzsf+MyEGaewC+OZqgNaRzOJUx+FJvTpB
+XQESrMJsmxE7tQ4bDQIDAQAB
+-----END PUBLIC KEY-----`;
     }
 
     const shareFile = async (fileCID, fileName, encryptedPassword, sharedWith) => {
@@ -130,8 +141,10 @@ function App() {
     const issueDocument = async e => {
         const ownerAddress = document.getElementById("owner-address").value;
         const fileDocument = selectedFile;
-        if (!fileDocument || !ownerAddress)
+        if (!fileDocument || !ownerAddress) {
+            console.log("Please select a file and enter an owner address");
             return;
+        }
         
         const password = generateRandomPassword();
         const encryptedPassword = encryptPassword(password, await getPublicKey(ownerAddress));
@@ -167,7 +180,6 @@ function App() {
         };
 
         reader.readAsArrayBuffer(selectedFile);
-        
     }
 
     // REGISTER USER
@@ -250,18 +262,18 @@ function App() {
                     </Row>
 
                     <Row>
-                        { userDocuments.map((document) => ( <d className="col-6 p-3">
+                        { userDocuments.map((doc) => ( <div className="col-6 p-3">
                         <Card className="text-center"> 
                         <Card.Header>Verified</Card.Header>
                             <Card.Body>
-                                <Card.Title>Document Title</Card.Title>
+                                <Card.Title>{doc.fileName}</Card.Title>
                                 <Card.Text>
-                                    Hash: hash
+                                    CID: {doc.CID}
                                 </Card.Text>
 
                                 <Button variant="primary" className={`mx-2`} disabled={!userPrivateKey} onClick={e => {
                                     e.target.disabled = true;
-                                    downloadFileDecrypted('', '', '').then(b => {
+                                    downloadFileDecrypted(doc.CID, doc.fileName, doc.encryptedPassword).then(b => {
                                         e.target.disabled = false;
                                     }).catch(b => {
                                         e.target.disabled = false;
@@ -284,7 +296,7 @@ function App() {
                             </Card.Body>
                             <Card.Footer className="text-muted">Timestamp Vaule</Card.Footer>
                         </Card>
-                        </d>)) }
+                        </div>)) }
                     </Row>
                 </>}
                 {selectedTab === "shared" && <>
@@ -310,12 +322,12 @@ function App() {
                 {selectedTab === "home" && <>
                     <h1 className="mb-5">Issue Document</h1>
                     
-                    <InputGroup className="mb-5">
-                        <InputGroup.Text id="#owner-address">
-                        Owner Address
-                        </InputGroup.Text>
-                        <Form.Control id="basic-url" aria-describedby="basic-addon3" />
-                    </InputGroup>
+                    <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                        <span className="input-group-text" id="basic-addon1">Owner Address</span>
+                    </div>
+                    <input type="text" className="form-control" placeholder="Owner Address" aria-label="Username"  id='owner-address' aria-describedby="basic-addon1" />
+                    </div>
 
                     <Row className={'mt-5'}>
                         <Col className={'col-6'}>
@@ -351,7 +363,7 @@ function App() {
                     </Row>
 
                     <Row>
-                        { userDocuments.map((document) => ( <d className="col-6 p-3">
+                        { userDocuments.map((doc) => ( <div className="col-6 p-3">
                         <Card className="text-center"> 
                         <Card.Header>Owner</Card.Header>
                             <Card.Body>
@@ -372,7 +384,7 @@ function App() {
                             </Card.Body>
                             <Card.Footer className="text-muted">Timestamp Vaule</Card.Footer>
                         </Card>
-                        </d>)) }
+                        </div>)) }
                     </Row>
                 </>}
             </>}
