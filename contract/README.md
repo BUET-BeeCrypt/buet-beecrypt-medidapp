@@ -11,3 +11,8 @@ REPORT_GAS=true npx hardhat test
 npx hardhat node
 npx hardhat run scripts/deploy.js
 ```
+
+## Related link
+- [Hardhat project setup](https://hardhat.org/hardhat-runner/docs/guides/project-setup)
+- [Polygon Deployment](https://dapp-world.com/smartbook/deploy-smart-contract-on-polygon-pos-using-hardhat-bhta)
+- [What’s really happening when you add a file to IPFS?](https://medium.com/textileio/whats-really-happening-when-you-add-a-file-to-ipfs-ae3b8b5e4b0f)
