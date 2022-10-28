@@ -15,6 +15,7 @@ import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
 import { FileUploader } from "react-drag-drop-files";
 import { getHash } from "./sha256";
+import { Alert, Button, Card, Col, Row } from "react-bootstrap";
 
 const generateRandomPassword = () => {
   let chars =
@@ -91,9 +92,54 @@ function App() {
         setSelectedTab(e.target.dataset.tab || "home");
     }
 
+    const [userPrivateKey, setUserPrivateKey] = useState(null);
+    const [userDocuments, setUserDocuments] = useState([]);
+
+    const downloadFileDecrypted = async (fileCID, fileName, encryptedPassword) => {
+        try {
+            const response = await axios.get(`https://gateway.pinata.cloud/ipfs/${fileCID}`,
+                // {responseType: 'arraybuffer', headers: {
+                //     'Content-Type': 'application/pdf'
+                // }}
+            );
+            const decryptedPassword = decryptPassword(encryptedPassword, userPrivateKey);
+            const decryptedFile = await aesGcmDecrypt(response.data, decryptedPassword);
+            // const decryptedFile = response.data;
+            save(fileName, decryptedFile);
+        } catch (error) {
+            console.log("Error downloading File: ");
+            console.log(error);
+        }
+    }
+
+    const getPublicKey = async (user) => {
+        return "";
+    }
+
+    const shareFile = async (fileCID, fileName, encryptedPassword, sharedWith) => {
+        const decryptedPassword = decryptPassword(encryptedPassword, userPrivateKey);
+        const doctorEncryptedPassword = encryptPassword(decryptedPassword, await getPublicKey(sharedWith));
+
+        console.log({ fileCID, fileName, doctorEncryptedPassword, sharedWith });
+
+        // Call to Ethereum to store the fileCID, fileName, doctorEncryptedPassword, sharedWith
+    }
+
+    // REGISTER USER
+    const registerUser = async e => {
+        const keys = generateKeys();
+        console.log(keys.public);
+        save("private-key-medidapp.pem", keys.private, "text/plain");
+    }
+
+
+    const [fileVerificationInfo, setFileVerificationInfo] = useState(null);
+    // VERIFY FILE
     const fileVerificationFileSelected = file => {
+        setFileVerificationInfo(null)
         getHash(file).then(hash => {
             console.log(hash);
+            // setFileVerificationInfo(response);
         })
     }
 
@@ -140,7 +186,62 @@ function App() {
 
             {userType === "user" && <>
                 {selectedTab === "home" && <>
+                    <h1 className="mb-5">My Documents</h1>
 
+                    <Row>
+                        <Col>
+                            <Alert>
+                                Provide your private to download or share a document
+                            </Alert>
+                        </Col>
+                        <Col className={'mt-1'}>
+                            <FileUploader label='Open Private Key' handleChange={ file => {
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                    setUserPrivateKey(reader.result);
+                                }
+                                reader.readAsText(file);
+                            }} name="file" types={['pem']}/>
+                        </Col>
+                    </Row>
+
+                    <Row>
+                        { userDocuments.map((document) => ( <d className="col-6 p-3">
+                        <Card className="text-center"> 
+                        <Card.Header>Verified</Card.Header>
+                            <Card.Body>
+                                <Card.Title>Document Title</Card.Title>
+                                <Card.Text>
+                                    Hash: hash
+                                </Card.Text>
+
+                                <Button variant="primary" className={`mx-2`} disabled={!userPrivateKey} onClick={e => {
+                                    e.target.disabled = true;
+                                    downloadFileDecrypted('', '', '').then(b => {
+                                        e.target.disabled = false;
+                                    }).catch(b => {
+                                        e.target.disabled = false;
+                                    })
+                                }}>Download</Button>
+
+                                <Button variant='outline-primary' className={`mx-2`}  disabled={!userPrivateKey} onClick={e => {
+                                    const doctorId = prompt("Enter Doctor's Address");
+                                    if (doctorId == null || doctorId === "")
+                                        return;
+                                    
+                                    e.target.disabled = true;
+                                    shareFile('', '', '', doctorId).then(b => {
+                                        e.target.disabled = false;
+                                    }).catch(b => {
+                                        e.target.disabled = false;
+                                    })
+                                }}>Share</Button>
+
+                            </Card.Body>
+                            <Card.Footer className="text-muted">Timestamp Vaule</Card.Footer>
+                        </Card>
+                        </d>)) }
+                    </Row>
                 </>}
                 {selectedTab === "shared" && <>
 
@@ -149,7 +250,15 @@ function App() {
 
             {userType === "unregistered" && <>
                 {selectedTab === "home" && <>
+                    <h1 className="mb-5">Create an account to start using MediDapp</h1>
 
+                    <Alert variant={'warning'}>
+                        You will be provided with a private key, please keep it safe. You will need it to access your account.
+                    </Alert>
+                    <div className="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <Button variant="primary" onClick={registerUser}>Register</Button>
+                    </div>
+                    
                 </>}
             </>}
 
@@ -164,36 +273,50 @@ function App() {
 
             {selectedTab === "verify" &&
                 <>
-                    <FileUploader handleChange={fileVerificationFileSelected} name="file" types={['pdf']} />
+                    <FileUploader handleChange={fileVerificationFileSelected} name="file" types={['pdf']}/>
+
+                    {fileVerificationInfo && <>
+                        <Card className='mt-5'>
+                            <Card.Header>File Verification Info</Card.Header>
+                            <Card.Body>
+                            { fileVerificationInfo.length === 0 ? 
+                                <>
+                                    <blockquote className="blockquote mb-0">
+                                    <p className="text-danger mb-4">
+                                        {' '}
+                                        Not found
+                                        {' '}
+                                    </p>
+                                    <footer className="blockquote-footer">
+                                        Status: <cite title="">Document not found in the system</cite>
+                                    </footer>
+                                    </blockquote>
+                                </> : 
+                                <>
+                                    <blockquote className="blockquote mb-0">
+                                    <p>
+                                        {' '}
+                                        File Name: {fileVerificationInfo[0].fileName}
+                                        <br />
+                                        Owner: {fileVerificationInfo[0].ownerAddress}
+                                        <br />
+                                        File Hash: {fileVerificationInfo[0].fileHash}
+                                        {' '}
+                                    </p>
+                                    <footer className="blockquote-footer">
+                                        Created: <cite title="Creation Time">{fileVerificationInfo[0].timestamp.value}</cite>
+                                    </footer>
+                                    </blockquote>
+                                </>
+                            }
+                            </Card.Body>
+                        </Card>
+                    </>}
                 </>
             }
 
         </Container>
-
-        <form
-            onSubmit={(e) => {
-            e.preventDefault();
-            sendFileToIPFS();
-            }}
-        >
-            <input
-            type="file"
-            onChange={(e) => setFileDocument(e.target.files[0])}
-            required
-            />
-            <button type="submit">Mint NFT</button>
-            <br />
-            <button
-            onClick={(e) => {
-                e.preventDefault();
-                const keys = generateKeys();
-                console.log(keys.public);
-                save("private.pem", keys.private, "text/plain");
-            }}
-            >
-            Generate Keys
-            </button>
-        </form>
+        
         </>
     );
 }
