@@ -3,6 +3,18 @@ import { useState } from 'react';
 import './App.css';
 import axios from 'axios'
 
+const generateRandomPassword = () => {
+    let chars = "0123456789abcdefghijklmnopqrstuvwxyz!@#$%^&*()ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let passwordLength = 12;
+    let password = "";
+    for (let i = 0; i <= passwordLength; i++) {
+        let randomNumber = Math.floor(Math.random() * chars.length);
+        password += chars.substring(randomNumber, randomNumber +1);
+    }
+    console.log(`Password: ${password}`);
+    return password;
+ }
+
 function App() {
   const [fileImg, setFileImg] = useState(null);
 
@@ -10,10 +22,16 @@ function App() {
     if (fileImg) {
         try {
 
-            const formData = new FormData();
-            formData.append("file", fileImg);
+            const password = generateRandomPassword();
+            // const encryptedBuffer = aes256.encrypt(password, buffer);
+            
+            // AES.encrypt(buffer, password).toString();
+            // console.log(encryptedBuffer);
 
-            const resFile = await axios({
+            const formData = new FormData();
+            formData.append("file", fileImg); 
+
+            /*const resFile = await axios({
                 method: "post",
                 url: "https://api.pinata.cloud/pinning/pinFileToIPFS",
                 data: formData,
@@ -27,7 +45,7 @@ function App() {
             const ImgHash = `ipfs://${resFile.data.IpfsHash}`;
         console.log(ImgHash); 
     //Take a look at your Pinata Pinned section, you will see a new file added to you list.   
-
+            */
 
 
         } catch (error) {
@@ -36,23 +54,6 @@ function App() {
         }
     }
   }
-// // infura, goerli,
-// const onSubmitHandler = async (event) => {
-//   event.preventDefault();
-//   const form = event.target;
-//   const files = (form[0] ).files;
-
-//   if (!files || files.length === 0) {
-//     return alert("No files selected");
-//   }
-
-//   const file = files[0];
-//   // upload files
-
-//  console.log(result);
-
-//   form.reset();
-// };
 
   return(
     <form onSubmit={e => { e.preventDefault(); sendFileToIPFS() } }>
