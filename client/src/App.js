@@ -196,6 +196,8 @@ XQESrMJsmxE7tQ4bDQIDAQAB
                     type: fileDocument.type,
                 });
 
+                const hash = await getHash(fileDocument);
+
                 toast.dismiss(loadId);
                 loadId = toast.loading("Uploading file...");
 
@@ -214,8 +216,14 @@ XQESrMJsmxE7tQ4bDQIDAQAB
                 });
 
                 const CID = `${resFile.data.IpfsHash}`;
+                toast.dismiss(loadId);
 
-                console.log({ CID, fileName: fileDocument.name, encryptedPassword, ownerAddress });
+                loadId = toast.loading("Adding to chain...");
+                
+                await mediDocContractSol.addDocument(fileDocument.name, CID, encryptedPassword, hash, ownerAddress);
+                console.log({ CID, fileName: fileDocument.name, encryptedPassword, hash, ownerAddress });
+                
+                toast.dismiss(loadId);
 
             } catch (error) {
                 toast.dismiss(loadId);
@@ -249,6 +257,9 @@ XQESrMJsmxE7tQ4bDQIDAQAB
         toast.success("Calculating file hash...");
         getHash(file).then(hash => {
             console.log(hash);
+            mediDocContractSol.getDocument(hash)
+                .then(res => {setFileVerificationInfo([res]); console.log(res)})
+                .catch(err => {setFileVerificationInfo([])});
             // setFileVerificationInfo(response);
         })
     }
@@ -469,16 +480,17 @@ XQESrMJsmxE7tQ4bDQIDAQAB
                                         <>
                                             <blockquote className="blockquote mb-0">
                                                 <p>
-                                                    {' '}
-                                                    File Name: {fileVerificationInfo[0].fileName}
-                                                    <br />
-                                                    Owner: {fileVerificationInfo[0].ownerAddress}
-                                                    <br />
-                                                    File Hash: {fileVerificationInfo[0].fileHash}
-                                                    {' '}
+                                                {' '}
+                                                File Name: {fileVerificationInfo[0].fileName}
+                                                <br />
+                                                Owner: {fileVerificationInfo[0].owner}
+                                                <br />
+                                                Issuer: {fileVerificationInfo[0].issuer}
+                                                {' '}
                                                 </p>
                                                 <footer className="blockquote-footer">
-                                                    Created: <cite title="Creation Time">{fileVerificationInfo[0].timestamp.value}</cite>
+                                                {/* {new Date(Number.parseInt(fileVerificationInfo[0].timestamp._hex)).toDateString()} */}
+                                                Created: <cite title="Creation Time">{new Date(Number.parseInt(fileVerificationInfo[0].timestamp._hex)*1000).toDateString()}</cite>
                                                 </footer>
                                             </blockquote>
                                         </>
