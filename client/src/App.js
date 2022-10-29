@@ -21,9 +21,9 @@ import { useEffect } from "react";
 import toast, { Toaster } from 'react-hot-toast';
 
 // import apis
-import userContractAbi from "../../contract/artifacts/contracts/UserContract.sol/UserContract.json"
-import mediDocContractAbi from "../../contract/artifacts/contracts/MediDoc.sol/MediDocContract.json"
-import shareContractAbi from "../../contract/artifacts/contracts/Share.sol/ShareContract.json"
+import userContractJson from "./abi/UserContract.json"
+import mediDocContractJson from "./abi/MediDocContract.json"
+import shareContractJson from "./abi/ShareContract.json"
 
 const userContractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 const mediDocContractAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
@@ -46,9 +46,22 @@ function App() {
     const provider = new ethers.providers.Web3Provider(window.ethereum)
     const signer = provider.getSigner()
 
-    const userContractSol = new ethers.Contract(userContractAddress, userContractAbi, signer); 
-    const mediDocContractSol = new ethers.Contract(mediDocContractAddress, mediDocContractAbi, signer); 
-    const shareContractSol = new ethers.Contract(shareContractAddress, shareContractAbi, signer); 
+    const userContractSol = new ethers.Contract(userContractAddress, userContractJson.abi, signer); 
+    const mediDocContractSol = new ethers.Contract(mediDocContractAddress, mediDocContractJson.abi, signer); 
+    const shareContractSol = new ethers.Contract(shareContractAddress, shareContractJson.abi, signer); 
+
+    const [userType, setUserType] = useState("unregistered");
+
+    const getAccount = async () => {
+        const user = await userContractSol.getSelf()
+        if (user.userType === '')
+            setUserType('unregistered')
+        else
+            setUserType(user.userType)
+
+        console.log(user);
+    }
+
 
     useEffect(() => {
         const requestAccounts = async () => {
@@ -71,8 +84,6 @@ function App() {
             // 15785491
         }
 
-        
-
 
         // { BigNumber: "182826475815887608" }
 
@@ -90,7 +101,7 @@ function App() {
         requestAccounts()
             .catch(console.error)
         .then(() => {
-            //getBalance().catch(console.error);
+            getAccount().catch(console.error);
         })
 
         getBalance()
@@ -98,8 +109,6 @@ function App() {
         // getGreeting()
         //   .catch(console.error)
     }, [])
-
-    const [userType, setUserType] = useState("user");
 
     const [selectedTab, setSelectedTab] = useState("home");
     const changeTab = e => {
@@ -221,11 +230,16 @@ XQESrMJsmxE7tQ4bDQIDAQAB
 
     // REGISTER USER
     const registerUser = async e => {
-        const role = e.target.dataset.role || "patient";
+        const role = e.target.dataset.role || "user";
         const keys = generateKeys();
         console.log(keys.public);
         toast.success("Downloading your private key...");
         save(`private-key-medidapp-${role}.pem`, keys.private, "text/plain");
+        let loadId = toast.loading("Registering...");
+        console.log({ role, publicKey: keys.public });
+        await userContractSol.add(role, keys.public)
+        toast.dismiss(loadId);
+        setTimeout(() => {window.location.reload()}, 5000);
     }
 
     const [fileVerificationInfo, setFileVerificationInfo] = useState(null);
@@ -353,7 +367,7 @@ XQESrMJsmxE7tQ4bDQIDAQAB
                         </Alert>
                         <div className="d-grid gap-2 d-md-flex justify-content-md-end mt-5">
                             <Button variant="outline-primary" onClick={registerUser} data-role="doctor">Register as Doctor</Button>
-                            <Button variant="primary" onClick={registerUser} data-role="patient">Register as Patient</Button>
+                            <Button variant="primary" onClick={registerUser} data-role="user">Register as Patient</Button>
                         </div>
 
                     </>}
