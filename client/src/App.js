@@ -46,9 +46,9 @@ function App() {
     const provider = new ethers.providers.Web3Provider(window.ethereum)
     const signer = provider.getSigner()
 
-    const userContractSol = new ethers.Contract(userContractAddress, userContractJson.abi, signer); 
-    const mediDocContractSol = new ethers.Contract(mediDocContractAddress, mediDocContractJson.abi, signer); 
-    const shareContractSol = new ethers.Contract(shareContractAddress, shareContractJson.abi, signer); 
+    const userContractSol = new ethers.Contract(userContractAddress, userContractJson.abi, signer);
+    const mediDocContractSol = new ethers.Contract(mediDocContractAddress, mediDocContractJson.abi, signer);
+    const shareContractSol = new ethers.Contract(shareContractAddress, shareContractJson.abi, signer);
 
     const [userType, setUserType] = useState("unregistered");
 
@@ -84,28 +84,14 @@ function App() {
             // 15785491
         }
 
-
-        // { BigNumber: "182826475815887608" }
-
-
-        // const getGreeting = async () => {
-        //   const greeting = await contract.greet();
-        //   setGreet(greeting);
-        // }
-
-        // const getBalance = async () => {
-        //   const balance = await provider.getBalance(contractAddress);
-        //   setBalance(ethers.utils.formatEther(balance));
-        // }
-
         requestAccounts()
             .catch(console.error)
-        .then(() => {
-            getAccount().catch(console.error);
-        })
+            .then(() => {
+                getAccount().catch(console.error);
+            })
 
         getBalance()
-          .catch(console.error)
+            .catch(console.error)
         // getGreeting()
         //   .catch(console.error)
     }, [])
@@ -117,12 +103,7 @@ function App() {
     }
 
     const [userPrivateKey, setUserPrivateKey] = useState(null);
-    const [userDocuments, setUserDocuments] = useState([{
-        "CID": "QmfSEr2kDfAFp45BGZS2DQwJEy7gwwUfqwxM3hWNDKcBsY",
-        "fileName": "LLTemplates.pdf",
-        "encryptedPassword": "Src92Nncdfzc3+mW3sVO2cwI61k5G9GBIUOF7e1dZQiAaWmN0ScoklLZbA4keH3/okCFDkMY6vKq0nnuHt8AItN3QYrC22kPhhSRxUF8LMYjWscsW5C3oELfU2Ayu2Be247QgyeeVa2GpwOKHfyXGfSFc+IgVTQ41awWNPC1Teg=",
-        "ownerAddress": "1234"
-    }]);
+    const [userDocuments, setUserDocuments] = useState([]);
 
     const downloadFileDecrypted = async (fileCID, fileName, encryptedPassword) => {
         let loadId = toast.loading("Downloading file...");
@@ -219,10 +200,10 @@ XQESrMJsmxE7tQ4bDQIDAQAB
                 toast.dismiss(loadId);
 
                 loadId = toast.loading("Adding to chain...");
-                
+
                 await mediDocContractSol.addDocument(fileDocument.name, CID, encryptedPassword, hash, ownerAddress);
                 console.log({ CID, fileName: fileDocument.name, encryptedPassword, hash, ownerAddress });
-                
+
                 toast.dismiss(loadId);
 
             } catch (error) {
@@ -247,7 +228,7 @@ XQESrMJsmxE7tQ4bDQIDAQAB
         console.log({ role, publicKey: keys.public });
         await userContractSol.add(role, keys.public)
         toast.dismiss(loadId);
-        setTimeout(() => {window.location.reload()}, 5000);
+        setTimeout(() => { window.location.reload() }, 5000);
     }
 
     const [fileVerificationInfo, setFileVerificationInfo] = useState(null);
@@ -258,11 +239,17 @@ XQESrMJsmxE7tQ4bDQIDAQAB
         getHash(file).then(hash => {
             console.log(hash);
             mediDocContractSol.getDocument(hash)
-                .then(res => {setFileVerificationInfo([res]); console.log(res)})
-                .catch(err => {setFileVerificationInfo([])});
+                .then(res => { setFileVerificationInfo([res]); console.log(res) })
+                .catch(err => { setFileVerificationInfo([]) });
             // setFileVerificationInfo(response);
         })
     }
+
+    useEffect(() => {
+        if (userType === "user" && selectedTab === "home") {
+            mediDocContractSol.getDocuments().then(e => {setUserDocuments(e); console.log(e)});
+        }
+    }, [selectedTab, userType])
 
     return (
         <>
@@ -329,16 +316,16 @@ XQESrMJsmxE7tQ4bDQIDAQAB
                         <Row>
                             {userDocuments.map((doc) => (<div className="col-6 p-3">
                                 <Card className="text-center">
-                                    <Card.Header>Verified</Card.Header>
+                                    <Card.Header>Issuer: {doc.issuer}</Card.Header>
                                     <Card.Body>
                                         <Card.Title>{doc.fileName}</Card.Title>
                                         <Card.Text>
-                                            CID: {doc.CID}
+                                            CID: {doc.fileCID}
                                         </Card.Text>
 
                                         <Button variant="primary" className={`mx-2`} disabled={!userPrivateKey} onClick={e => {
                                             e.target.disabled = true;
-                                            downloadFileDecrypted(doc.CID, doc.fileName, doc.encryptedPassword).then(b => {
+                                            downloadFileDecrypted(doc.fileCID, doc.fileName, doc.fileKey).then(b => {
                                                 e.target.disabled = false;
                                             }).catch(b => {
                                                 e.target.disabled = false;
@@ -351,7 +338,7 @@ XQESrMJsmxE7tQ4bDQIDAQAB
                                                 return;
 
                                             e.target.disabled = true;
-                                            shareFile('', '', '', doctorId).then(b => {
+                                            shareFile(doc.fileCID, doc.fileName, doc.fileKey, doctorId).then(b => {
                                                 e.target.disabled = false;
                                             }).catch(b => {
                                                 e.target.disabled = false;
@@ -359,7 +346,7 @@ XQESrMJsmxE7tQ4bDQIDAQAB
                                         }}>Share</Button>
 
                                     </Card.Body>
-                                    <Card.Footer className="text-muted">Timestamp Vaule</Card.Footer>
+                                    <Card.Footer className="text-muted">Created: {new Date(Number.parseInt(doc.timestamp._hex) * 1000).toDateString()}</Card.Footer>
                                 </Card>
                             </div>))}
                         </Row>
@@ -480,17 +467,17 @@ XQESrMJsmxE7tQ4bDQIDAQAB
                                         <>
                                             <blockquote className="blockquote mb-0">
                                                 <p>
-                                                {' '}
-                                                File Name: {fileVerificationInfo[0].fileName}
-                                                <br />
-                                                Owner: {fileVerificationInfo[0].owner}
-                                                <br />
-                                                Issuer: {fileVerificationInfo[0].issuer}
-                                                {' '}
+                                                    {' '}
+                                                    File Name: {fileVerificationInfo[0].fileName}
+                                                    <br />
+                                                    Owner: {fileVerificationInfo[0].owner}
+                                                    <br />
+                                                    Issuer: {fileVerificationInfo[0].issuer}
+                                                    {' '}
                                                 </p>
                                                 <footer className="blockquote-footer">
-                                                {/* {new Date(Number.parseInt(fileVerificationInfo[0].timestamp._hex)).toDateString()} */}
-                                                Created: <cite title="Creation Time">{new Date(Number.parseInt(fileVerificationInfo[0].timestamp._hex)*1000).toDateString()}</cite>
+                                                    {/* {new Date(Number.parseInt(fileVerificationInfo[0].timestamp._hex)).toDateString()} */}
+                                                    Created: <cite title="Creation Time">{new Date(Number.parseInt(fileVerificationInfo[0].timestamp._hex) * 1000).toDateString()}</cite>
                                                 </footer>
                                             </blockquote>
                                         </>
