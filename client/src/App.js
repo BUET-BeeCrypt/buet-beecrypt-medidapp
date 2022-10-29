@@ -16,6 +16,9 @@ import Navbar from "react-bootstrap/Navbar";
 import { FileUploader } from "react-drag-drop-files";
 import { getHash } from "./sha256";
 import { Alert, Button, Card, Col, Form, InputGroup, Row } from "react-bootstrap";
+import { ethers } from "ethers";
+import { useEffect } from "react";
+import toast, { Toaster } from 'react-hot-toast';
 
 const generateRandomPassword = () => {
   let chars =
@@ -31,58 +34,36 @@ const generateRandomPassword = () => {
 };
 
 function App() {
-    // const [fileDocument, setFileDocument] = useState(null);
-    // const sendFileToIPFS = async (e) => {
-    //     if (fileDocument) {
-    //     try {
-    //         const password = generateRandomPassword();
+    /*const provider = new ethers.providers.Web3Provider(window.ethereum)
+    const signer = provider.getSigner()
 
-    //         const encryptedPassword = encryptPassword(password);
-    //         console.log(`Encrypted Password: ${encryptedPassword}`);
-    //         const decryptedPassword = decryptPassword(encryptedPassword);
-    //         console.log(`Decrypted Password: ${decryptedPassword}`);
+    const contractAddress = 'yourDeployedContractAddressGoesHere';
+    const ABI = "yourABIGoesHere"
+    
+    const contract = new ethers.Contract(contractAddress, ABI, signer); 
 
-    //         let reader = new FileReader();
-    //         reader.readAsArrayBuffer(fileDocument);
-    //         reader.onloadend = async () => {
-    //         console.log(reader.result);
-    //         const encrypted = await aesGcmEncrypt(reader.result, password);
-    //         console.log(encrypted);
-    //         const decrypted = await aesGcmDecrypt(encrypted, password);
-    //         console.log(decrypted);
-
-    //         const decryptedFile = new File([decrypted], fileDocument.name, {
-    //             type: fileDocument.type,
-    //         });
-    //         console.log(decryptedFile);
-
-    //         save(fileDocument.name, decryptedFile);
-    //         };
-
-    //         const formData = new FormData();
-    //         formData.append("file", fileDocument);
-
-    //         /*const resFile = await axios({
-    //                 method: "post",
-    //                 url: "https://api.pinata.cloud/pinning/pinFileToIPFS",
-    //                 data: formData,
-    //                 headers: {
-    //                     'pinata_api_key': `81852fb3d69cda1abf17`, // ${process.env.REACT_APP_PINATA_API_KEY}
-    //                     'pinata_secret_api_key': `d0621cab7ea068f42c4c150be07b14a99a91be4f4de700fe82746704e12acbf6`, // ${process.env.REACT_APP_PINATA_API_SECRET}
-    //                     "Content-Type": "multipart/form-data"
-    //                 },
-    //             });
-
-    //             const ImgHash = `ipfs://${resFile.data.IpfsHash}`;
-    //         console.log(ImgHash);
-    //     //Take a look at your Pinata Pinned section, you will see a new file added to you list.
-    //             */
-    //     } catch (error) {
-    //         console.log("Error sending File to IPFS: ");
-    //         console.log(error);
-    //     }
-    //     }
-    // };
+    useEffect(() => {
+        const requestAccounts = async () => {
+          await provider.send("eth_requestAccounts", []);
+        }
+        
+        // const getGreeting = async () => {
+        //   const greeting = await contract.greet();
+        //   setGreet(greeting);
+        // }
+    
+        // const getBalance = async () => {
+        //   const balance = await provider.getBalance(contractAddress);
+        //   setBalance(ethers.utils.formatEther(balance));
+        // }
+    
+        requestAccounts()
+          .catch(console.error)
+        // getBalance()
+        //   .catch(console.error)
+        // getGreeting()
+        //   .catch(console.error)
+      }, [])*/
 
     const [userType, setUserType] = useState("user");
 
@@ -101,19 +82,24 @@ function App() {
     }]);
 
     const downloadFileDecrypted = async (fileCID, fileName, encryptedPassword) => {
+        let loadId = toast.loading("Downloading file...");
         try {
             const response = await axios.get(`https://gateway.pinata.cloud/ipfs/${fileCID}`,
                 // {responseType: 'arraybuffer', headers: {
                 //     'Content-Type': 'application/pdf'
                 // }}
             );
-            
+            toast.dismiss(loadId);
+            loadId = toast.loading("Decrypting file...");
             const decryptedPassword = decryptPassword(encryptedPassword, userPrivateKey);
             const decryptedFile = await aesGcmDecrypt(response.data, decryptedPassword);
+            toast.dismiss(loadId);
+            toast.success("File downloaded successfully!");
             // const decryptedFile = response.data;
             save(fileName, decryptedFile);
         } catch (error) {
-            console.log("Error downloading File: ");
+            toast.dismiss(loadId);
+            toast.error("Error downloading or decrypting file: " + error.message);
             console.log(error);
         }
     }
@@ -128,10 +114,17 @@ XQESrMJsmxE7tQ4bDQIDAQAB
     }
 
     const shareFile = async (fileCID, fileName, encryptedPassword, sharedWith) => {
-        const decryptedPassword = decryptPassword(encryptedPassword, userPrivateKey);
-        const doctorEncryptedPassword = encryptPassword(decryptedPassword, await getPublicKey(sharedWith));
-
-        console.log({ fileCID, fileName, doctorEncryptedPassword, sharedWith });
+        let loadId = toast.loading("Sharing file...");
+        try {
+            const decryptedPassword = decryptPassword(encryptedPassword, userPrivateKey);
+            const doctorEncryptedPassword = encryptPassword(decryptedPassword, await getPublicKey(sharedWith));
+            toast.dismiss(loadId);
+            console.log({ fileCID, fileName, doctorEncryptedPassword, sharedWith });
+        } catch (error) {
+            toast.dismiss(loadId);
+            toast.error("Error sharing file: " + error.message);
+            console.log(error);
+        }
 
         // Call to Ethereum to store the fileCID, fileName, doctorEncryptedPassword, sharedWith
     }
@@ -142,7 +135,7 @@ XQESrMJsmxE7tQ4bDQIDAQAB
         const ownerAddress = document.getElementById("owner-address").value;
         const fileDocument = selectedFile;
         if (!fileDocument || !ownerAddress) {
-            console.log("Please select a file and enter an owner address");
+            toast.error("Please select a file and enter an owner address");
             return;
         }
         
@@ -152,29 +145,39 @@ XQESrMJsmxE7tQ4bDQIDAQAB
         let reader = new FileReader();
 
         reader.onloadend = async () => {
-            const encrypted = await aesGcmEncrypt(reader.result, password);
-            
-            const encryptedFile = new File([new Blob([encrypted], { type: 'text/plain' })], fileDocument.name, {
-                type: fileDocument.type,
-            });
+            let loadId = toast.loading("Encrypting file...");
+            try {
+                const encrypted = await aesGcmEncrypt(reader.result, password);
+                
+                const encryptedFile = new File([new Blob([encrypted], { type: 'text/plain' })], fileDocument.name, {
+                    type: fileDocument.type,
+                });
+                
+                toast.dismiss(loadId);
+                loadId = toast.loading("Uploading file...");
 
-            const formData = new FormData();
-            formData.append("file", encryptedFile);
+                const formData = new FormData();
+                formData.append("file", encryptedFile);
 
-            const resFile = await axios({
-                method: "post",
-                url: "https://api.pinata.cloud/pinning/pinFileToIPFS",
-                data: formData,
-                headers: {
-                    'pinata_api_key': `81852fb3d69cda1abf17`, // ${process.env.REACT_APP_PINATA_API_KEY}
-                    'pinata_secret_api_key': `d0621cab7ea068f42c4c150be07b14a99a91be4f4de700fe82746704e12acbf6`, // ${process.env.REACT_APP_PINATA_API_SECRET}
-                    "Content-Type": "multipart/form-data"
-                },
-            });
+                const resFile = await axios({
+                    method: "post",
+                    url: "https://api.pinata.cloud/pinning/pinFileToIPFS",
+                    data: formData,
+                    headers: {
+                        'pinata_api_key': `81852fb3d69cda1abf17`, // ${process.env.REACT_APP_PINATA_API_KEY}
+                        'pinata_secret_api_key': `d0621cab7ea068f42c4c150be07b14a99a91be4f4de700fe82746704e12acbf6`, // ${process.env.REACT_APP_PINATA_API_SECRET}
+                        "Content-Type": "multipart/form-data"
+                    },
+                });
 
-            const CID = `${resFile.data.IpfsHash}`;
+                const CID = `${resFile.data.IpfsHash}`;
 
-            console.log({ CID, fileName: fileDocument.name, encryptedPassword, ownerAddress });
+                console.log({ CID, fileName: fileDocument.name, encryptedPassword, ownerAddress });
+
+            } catch (error) {
+                toast.dismiss(loadId);
+                toast.error("Error issuing file: " + error.message);
+            }
 
             // Call to Ethereum to store the CID, fileName, encryptedPassword, ownerAddress
         };
@@ -184,15 +187,18 @@ XQESrMJsmxE7tQ4bDQIDAQAB
 
     // REGISTER USER
     const registerUser = async e => {
+        const role = e.target.dataset.role || "patient";
         const keys = generateKeys();
         console.log(keys.public);
-        save("private-key-medidapp.pem", keys.private, "text/plain");
+        toast.success("Downloading your private key...");
+        save(`private-key-medidapp-${role}.pem`, keys.private, "text/plain");
     }
 
     const [fileVerificationInfo, setFileVerificationInfo] = useState(null);
     // VERIFY FILE
     const fileVerificationFileSelected = file => {
         setFileVerificationInfo(null)
+        toast.success("Calculating file hash...");
         getHash(file).then(hash => {
             console.log(hash);
             // setFileVerificationInfo(response);
@@ -309,10 +315,11 @@ XQESrMJsmxE7tQ4bDQIDAQAB
                     <h1 className="mb-5">Create an account to start using MediDapp</h1>
 
                     <Alert variant={'warning'}>
-                        You will be provided with a private key, please keep it safe. You will need it to access your account.
+                        You will be provided with a private key, please keep it safe. You will need it to access your account files.
                     </Alert>
-                    <div className="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <Button variant="primary" onClick={registerUser}>Register</Button>
+                    <div className="d-grid gap-2 d-md-flex justify-content-md-end mt-5">
+                        <Button variant="outline-primary" onClick={registerUser} data-role="doctor">Register as Doctor</Button>
+                        <Button variant="primary" onClick={registerUser} data-role="patient">Register as Patient</Button>
                     </div>
                     
                 </>}
@@ -435,7 +442,7 @@ XQESrMJsmxE7tQ4bDQIDAQAB
             }
 
         </Container>
-
+        <Toaster position="bottom-left" />
         </>
     );
 }
