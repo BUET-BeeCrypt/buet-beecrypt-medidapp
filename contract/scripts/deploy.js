@@ -38,3 +38,9 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+
+/*
+deploy commands for hardhat
+npx hardhat node
+npx hardhat run --network localhost scripts/deploy.js
+*/
