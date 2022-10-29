@@ -145,6 +145,8 @@ function App() {
             const doctorEncryptedPassword = encryptPassword(decryptedPassword, await getPublicKey(sharedWith));
             toast.dismiss(loadId);
             console.log({ fileCID, fileName, doctorEncryptedPassword, sharedWith });
+            await shareContractSol.addSharedInfo(fileName, fileCID, doctorEncryptedPassword, sharedWith)
+            toast.success("File shared successfully!");
         } catch (error) {
             toast.dismiss(loadId);
             toast.error("Error sharing file: " + error.message);
@@ -207,7 +209,7 @@ function App() {
                 loadId = toast.loading("Adding to chain...");
 
                 await mediDocContractSol.addDocument(fileDocument.name, CID, encryptedPassword, hash, ownerAddress);
-                console.log({ CID, fileName: fileDocument.name, encryptedPassword, hash, ownerAddress });
+                console.log(JSON.stringify({ CID, fileName: fileDocument.name, encryptedPassword, hash, ownerAddress }));
 
                 toast.dismiss(loadId);
 
@@ -230,7 +232,7 @@ function App() {
         toast.success("Downloading your private key...");
         save(`private-key-medidapp-${role}.pem`, keys.private, "text/plain");
         let loadId = toast.loading("Registering...");
-        console.log({ role, publicKey: keys.public });
+        console.log(JSON.stringify({ role, publicKey: keys.public }));
         await userContractSol.add(role, keys.public)
         toast.dismiss(loadId);
         setTimeout(() => { window.location.reload() }, 5000);
@@ -243,7 +245,7 @@ function App() {
         toast.success("Calculating file hash...");
         getHash(file).then(hash => {
             console.log(hash);
-            mediDocContractSol.getDocument(hash)
+            mediDocContractSol.getDocument(document.getElementById('owner-verify').value , hash)
                 .then(res => { setFileVerificationInfo([res]); console.log(res) })
                 .catch(err => { setFileVerificationInfo([]) });
             // setFileVerificationInfo(response);
@@ -449,6 +451,13 @@ function App() {
 
                 {selectedTab === "verify" &&
                     <>
+                        <div className="input-group mb-3">
+                            <div className="input-group-prepend">
+                                <span className="input-group-text" id="basic-addon1">Owner Address</span>
+                            </div>
+                            <input type="text" className="form-control" placeholder="Owner Address" aria-label="Username" id='owner-verify' aria-describedby="basic-addon1" />
+                        </div>
+
                         <FileUploader handleChange={fileVerificationFileSelected} name="file" types={['pdf']}
                             label='Upload File to Verify' />
 
