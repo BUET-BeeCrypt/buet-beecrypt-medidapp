@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 contract MediDocContract {
-    enum State { Verified, Unverified }
+    enum State { Unverified,Verified}
 
     struct Document{
         string fileName;
@@ -16,13 +16,16 @@ contract MediDocContract {
 
     // state variables
     // map (wallet_address -> map hash -> Document))
-    mapping(address => mapping(string => Document)) user_documents;
+    //mapping(address => mapping(string => Document)) user_documents;
+    mapping(address => Document[]) user_docs;
 
     // events
     event FileUploadLog(
         string fileCID,  
         address creator,
         address owner);
+
+    event Verified(string msg);
 
 
     function addDocument(
@@ -35,27 +38,65 @@ contract MediDocContract {
         Document memory doc = Document(
             fileName, fileCID, fileKey, fileHash, ownerAddress, State.Unverified, block.timestamp
         );
-        user_documents[ownerAddress][fileHash] = doc;
+        //user_documents[ownerAddress][fileHash] = doc;
+        user_docs[ownerAddress].push(doc);
         emit FileUploadLog(fileName,msg.sender, ownerAddress);
     }
 
     function getDocument(string memory fileHash) public view returns(Document memory) {
-        return user_documents[msg.sender][fileHash];
+        Document[] memory docs = user_docs[msg.sender];
+        for(uint i = 0; i<docs.length; i++){
+            if(strcmp(docs[i].fileHash, fileHash))
+                return docs[i];
+        }
+        revert("Not found"); 
+       // return user_documents[msg.sender][fileHash];
+    }
+
+    function getDocuments() public view returns(Document[] memory){
+        return user_docs[msg.sender];
     }
 
 
-    function verify(string memory fileCID) public {
-        // require( certificates[cid].issuer  == msg.sender,
-        //     "Only issuer can verify a certificate"
-        // );
-        user_documents[msg.sender][fileCID].state = State.Verified;
+    function verify(string memory fileHash) public {
+        
+        uint len = user_docs[msg.sender].length;
+        for(uint i = 0; i<len; i++){
+            if(strcmp(user_docs[msg.sender][i].fileHash, fileHash)){
+                emit Verified("file found");
+                require(
+                    user_docs[msg.sender][i].owner != msg.sender, 
+                    "Not owner"
+                );
+            
+                user_docs[msg.sender][i].state = State.Verified;
+                emit Verified("document verified");
+            }
+        }
+        
     }
 
-    function isVerified(string memory fileCID) public view returns(bool) {
-        return user_documents[msg.sender][fileCID].state == State.Verified;
+    function isVerified(string memory fileHash) public view returns(bool) {
+        Document[] memory docs = user_docs[msg.sender];
+        for(uint i = 0; i<docs.length; i++){
+            if(strcmp(docs[i].fileHash, fileHash))
+                return docs[i].state == State.Verified;
+        }
+        return false;
     }
 
-    function isVerified2(address owner, string memory fileCID) public view returns(bool) {
-        return user_documents[owner][fileCID].state == State.Verified;
+    function isVerified2(address owner, string memory fileHash) public view returns(bool) {
+        Document[] memory docs = user_docs[owner];
+        for(uint i = 0; i<docs.length; i++){
+            if(strcmp(docs[i].fileHash, fileHash))
+                return docs[i].state == State.Verified;
+        }
+        return false;
+    }
+
+    // private files
+    // ===========  private functions ====================
+    function strcmp(string memory s1, string memory s2) public pure returns(bool){
+        return keccak256(abi.encodePacked(s1)) == keccak256(abi.encodePacked(s2));
     }
 }
