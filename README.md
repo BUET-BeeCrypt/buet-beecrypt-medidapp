@@ -1,3 +1,20 @@
+# How to run the project
+```
+cd contract
+npm i
+npx hardhat compile
+npx hardhat test
+npx hardhat node
+npx hardhat run scripts/deploy.js --network localhost
+```
+copy the abi files from contract/artifacts/contracts/ to frontend/src/abi
+```
+cd frontend
+npm i
+npm start
+```
+
+
 # Solidity API Documentation
 
 ## MediDocContract
