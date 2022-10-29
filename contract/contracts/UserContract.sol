@@ -3,33 +3,41 @@
 pragma solidity ^0.8.9;
 
 contract UserContract{
+
+
     // state variables 
-    mapping(address => string) keys;
+    mapping(address => User) keys;
+
+    struct User{
+        string userType;
+        string pkey;
+    }
 
     event LogUser(address user);
 
     // saves users public key
-    function addKey(string memory pKey) public {
-        keys[msg.sender] = pKey;
+    function add(string memory _userType, string memory pKey) public {
+        User memory user = User(_userType, pKey);
+        keys[msg.sender] = user; 
     }
 
     // ============== views ============================
     /**
      * returns the public key of the user
      */
-    function getSelfKey() public view returns(string memory){
+    function getSelf() public view returns(User memory){
         return keys[msg.sender];
     }
 
     /**
      * returns the public key of the user
      */
-    function getKey(address user) public view returns(string memory){
+    function get(address user) public view returns(User memory){
         return keys[user];
     }
 
     function exists() public view returns (bool){
-        return !strcmp(keys[msg.sender],"");
+        return !strcmp(keys[msg.sender].userType,"");
     }
 
     // ===========  private functions ====================

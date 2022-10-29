@@ -16,11 +16,13 @@ nrJJOdeAtOZ8jtiVAgMBAAE =\n\
         // one year in the future
         const UserContract = await hre.ethers.getContractFactory("UserContract");
         const userContract = await UserContract.deploy();
-        await userContract.addKey(pkey);
+        await userContract.add("doctor", pkey);
 
         // assert that the value is correct
-        expect(await userContract.getSelfKey()).to.equal(pkey);
-    });
+        const user = await userContract.getSelf();
+        expect(user.userType).to.equal("doctor");
+        expect(user.pkey).to.equal(pkey);
+    }); 
 });
 
 // get other user keys
@@ -37,14 +39,15 @@ nrJJOdeAtOZ8jtiVAgMBAAE =\n\
         // one year in the future
         const UserContract = await hre.ethers.getContractFactory("UserContract");
         const userContract = await UserContract.deploy();
-        await userContract.addKey(pkey);
+        await userContract.add("doctor", pkey);
 
         const [owner, otherAccount] = await ethers.getSigners();
 
         //console.table([owner ,otherAccount]);
+        const user = await userContract.connect(otherAccount).get(owner.address);
+        expect(user.userType).to.equal("doctor");
+        expect(user.pkey).to.equal(pkey);
 
-        // assert that the value is correct
-        expect(await userContract.connect(otherAccount).getKey(owner.address)).to.equal(pkey);
     });
 });
 
@@ -62,7 +65,7 @@ nrJJOdeAtOZ8jtiVAgMBAAE =\n\
         // one year in the future
         const UserContract = await hre.ethers.getContractFactory("UserContract");
         const userContract = await UserContract.deploy();
-        await userContract.addKey(pkey);
+        await userContract.add("doctor", pkey);
 
         // assert that the value is correct
         expect(await userContract.exists()).to.equal(true);

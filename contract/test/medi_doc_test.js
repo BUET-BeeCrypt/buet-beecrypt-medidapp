@@ -27,12 +27,13 @@ describe("MediDoc", function () {
 
         const doc = await mediDoc.connect(account2).getDocument("pakpak");
         //console.table(doc);
-        // console.log(doc)
+        console.log(doc)
 
         expect(doc.fileName).to.equal("pakpak.pdf");
         expect(doc.fileCID).to.equal("bugichugi");
         expect(doc.fileKey).to.equal("keynai");
         expect(doc.fileHash).to.equal("pakpak");
+        expect(doc.issuer).to.equal(account1.address);
         expect(doc.owner).to.equal(account2.address);
         expect(doc.state).to.equal(0);        
     });

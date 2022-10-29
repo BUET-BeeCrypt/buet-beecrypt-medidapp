@@ -7,19 +7,28 @@
 const hre = require("hardhat");
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
-
-  const lockedAmount = hre.ethers.utils.parseEther("1");
-
-  const Lock = await hre.ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
-
-  await lock.deployed();
+  const UserContract = await hre.ethers.getContractFactory("UserContract");
+  const uc = await UserContract.deploy();
+  await uc.deployed();
 
   console.log(
-    `Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`
+    `UserContract deployed to ${uc.address}`
+  );
+
+  const MediDoc = await hre.ethers.getContractFactory("MediDocContract");
+  const mediDoc = await MediDoc.deploy();
+  await mediDoc.deployed();
+
+  console.log(
+    `MediDocContract deployed to ${mediDoc.address}`
+  );
+
+  const ShareContract = await hre.ethers.getContractFactory("ShareContract");
+  const sc = await ShareContract.deploy();
+  await sc.deployed();
+
+  console.log(
+    `ShareContract deployed to ${sc.address}`
   );
 }
 

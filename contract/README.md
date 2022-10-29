@@ -21,5 +21,7 @@ npx hardhat compile
 - [ETH VS POLYGON - Which One Should You Choose](https://www.youtube.com/watch?v=0stFVX05Z8w)
 - [Dapp university-solidity tutorial](https://www.dappuniversity.com/articles/solidity-tutorial)
 
+- [Getting started with solidity](https://dev.to/kalashin1/getting-started-with-solidity-21nm)
+
 - [Documentation](https://github.com/OpenZeppelin/solidity-docgen)
 - [Solidity Cheat sheet](https://manojpramesh.github.io/solidity-cheatsheet/)
