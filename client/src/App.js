@@ -115,7 +115,10 @@ function App() {
             );
             toast.dismiss(loadId);
             loadId = toast.loading("Decrypting file...");
+            console.log(userPrivateKey);
+            console.log(`Encrypted password: ${encryptedPassword}`);
             const decryptedPassword = decryptPassword(encryptedPassword, userPrivateKey);
+            console.log(`Decrypted password: ${decryptedPassword}`);
             const decryptedFile = await aesGcmDecrypt(response.data, decryptedPassword);
             toast.dismiss(loadId);
             toast.success("File downloaded successfully!");
@@ -129,18 +132,16 @@ function App() {
     }
 
     const getPublicKey = async (user) => {
-        return `-----BEGIN PUBLIC KEY-----
-MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCFO7F4SAYvt12HO3SgwR+/y7nl
-SYrTZU/gwvnN44euwjghqOAsYHWezlTM7XIF4p5ONdgXHdwdjkZp0u/lsQXHFbyJ
-mYTYLVgTJlbPY1wdrsFEmkIJsDaZDe+Xzsf+MyEGaewC+OZqgNaRzOJUx+FJvTpB
-XQESrMJsmxE7tQ4bDQIDAQAB
------END PUBLIC KEY-----`;
+        const userData = await userContractSol.get(user);
+        console.log(userData);
+        return userData.pkey;
     }
 
     const shareFile = async (fileCID, fileName, encryptedPassword, sharedWith) => {
         let loadId = toast.loading("Sharing file...");
         try {
             const decryptedPassword = decryptPassword(encryptedPassword, userPrivateKey);
+            console.log('here');
             const doctorEncryptedPassword = encryptPassword(decryptedPassword, await getPublicKey(sharedWith));
             toast.dismiss(loadId);
             console.log({ fileCID, fileName, doctorEncryptedPassword, sharedWith });
@@ -164,7 +165,11 @@ XQESrMJsmxE7tQ4bDQIDAQAB
         }
 
         const password = generateRandomPassword();
-        const encryptedPassword = encryptPassword(password, await getPublicKey(ownerAddress));
+        console.log(`Password: ${password}`);
+        const publicKey = await getPublicKey(ownerAddress);
+        console.log(`Public Key: ${publicKey}`);
+        const encryptedPassword = encryptPassword(password, publicKey);
+        console.log(`Encrypted Password: ${encryptedPassword}`);
 
         let reader = new FileReader();
 

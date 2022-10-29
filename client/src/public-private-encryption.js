@@ -33,14 +33,14 @@ uku7JUXcVpt08DFSceCEX9unCuMcT72rAQlLpdZir876
 // Assign our encryptor to utilize the public key.
 
 // Encrypt a message.
-export function encryptPassword(plain, key = publicKey) {
+export function encryptPassword(plain, key) {
     // Start our encryptor.
     var encrypt = new JSEncrypt();
     encrypt.setPublicKey(key);
     return encrypt.encrypt(plain);
 }
 
-export function decryptPassword(encrypted, key = privateKey) {
+export function decryptPassword(encrypted, key) {
     // Start our encryptor.
     var encrypt = new JSEncrypt();
     encrypt.setPrivateKey(key);

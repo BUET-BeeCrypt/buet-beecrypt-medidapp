@@ -2,15 +2,6 @@
 
 ## MediDocContract
 
-### State
-
-```solidity
-enum State {
-  Verified,
-  Unverified
-}
-```
-
 ### Document
 
 ```solidity
@@ -19,16 +10,16 @@ struct Document {
   string fileCID;
   string fileKey;
   string fileHash;
+  address issuer;
   address owner;
-  enum MediDocContract.State state;
   uint256 timestamp;
 }
 ```
 
-### user_documents
+### user_docs
 
 ```solidity
-mapping(address => mapping(string => struct MediDocContract.Document)) user_documents
+mapping(address => struct MediDocContract.Document[]) user_docs
 ```
 
 ### FileUploadLog
@@ -46,25 +37,19 @@ function addDocument(string fileName, string fileCID, string fileKey, string fil
 ### getDocument
 
 ```solidity
-function getDocument(string fileHash) public view returns (struct MediDocContract.Document)
+function getDocument(address owner, string fileHash) public view returns (struct MediDocContract.Document)
 ```
 
-### verify
+### getDocuments
 
 ```solidity
-function verify(string fileCID) public
+function getDocuments() public view returns (struct MediDocContract.Document[])
 ```
 
-### isVerified
+### strcmp
 
 ```solidity
-function isVerified(string fileCID) public view returns (bool)
-```
-
-### isVerified2
-
-```solidity
-function isVerified2(address owner, string fileCID) public view returns (bool)
+function strcmp(string s1, string s2) public pure returns (bool)
 ```
 
 ## UserContract
@@ -72,7 +57,16 @@ function isVerified2(address owner, string fileCID) public view returns (bool)
 ### keys
 
 ```solidity
-mapping(address => string) keys
+mapping(address => struct UserContract.User) keys
+```
+
+### User
+
+```solidity
+struct User {
+  string userType;
+  string pkey;
+}
 ```
 
 ### LogUser
@@ -81,24 +75,24 @@ mapping(address => string) keys
 event LogUser(address user)
 ```
 
-### addKey
+### add
 
 ```solidity
-function addKey(string pKey) public
+function add(string _userType, string pKey) public
 ```
 
-### getSelfKey
+### getSelf
 
 ```solidity
-function getSelfKey() public view returns (string)
+function getSelf() public view returns (struct UserContract.User)
 ```
 
 returns the public key of the user
 
-### getKey
+### get
 
 ```solidity
-function getKey(address user) public view returns (string)
+function get(address user) public view returns (struct UserContract.User)
 ```
 
 returns the public key of the user
@@ -115,35 +109,36 @@ function exists() public view returns (bool)
 function strcmp(string s1, string s2) public pure returns (bool)
 ```
 
-## Lock
+## ShareContract
 
-### unlockTime
+### SharedInfo
 
 ```solidity
-uint256 unlockTime
+struct SharedInfo {
+  string fileName;
+  string fileCid;
+  string fileKey;
+  address owner;
+  address sharedwith;
+  uint256 timestamp;
+}
 ```
 
-### owner
+### infos
 
 ```solidity
-address payable owner
+mapping(address => struct ShareContract.SharedInfo[]) infos
 ```
 
-### Withdrawal
+### addSharedInfo
 
 ```solidity
-event Withdrawal(uint256 amount, uint256 when)
+function addSharedInfo(string fileName, string fileCid, string fileKey, address receiver) public
 ```
 
-### constructor
+### getSharedInfos
 
 ```solidity
-constructor(uint256 _unlockTime) public payable
-```
-
-### withdraw
-
-```solidity
-function withdraw() public
+function getSharedInfos() public view returns (struct ShareContract.SharedInfo[])
 ```
 
