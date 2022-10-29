@@ -255,6 +255,8 @@ function App() {
     useEffect(() => {
         if (userType === "user" && selectedTab === "home") {
             mediDocContractSol.getDocuments().then(e => {setUserDocuments(e); console.log(e)});
+        } else if (userType === 'doctor' && selectedTab === 'shared') {
+            shareContractSol.getSharedInfos().then(e => { setUserDocuments(e); console.log(e)});
         }
     }, [selectedTab, userType])
 
@@ -425,16 +427,16 @@ function App() {
                         <Row>
                             {userDocuments.map((doc) => (<div className="col-6 p-3">
                                 <Card className="text-center">
-                                    <Card.Header>Owner</Card.Header>
+                                    <Card.Header>Owner {doc.owner}</Card.Header>
                                     <Card.Body>
-                                        <Card.Title>Document Title</Card.Title>
+                                        <Card.Title>{doc.fileName}</Card.Title>
                                         {/* <Card.Text>
                                     Hash: hash
                                 </Card.Text> */}
 
                                         <Button variant="primary" className={`mx-2`} disabled={!userPrivateKey} onClick={e => {
                                             e.target.disabled = true;
-                                            downloadFileDecrypted('', '', '').then(b => {
+                                            downloadFileDecrypted(doc.fileCid, doc.fileName, doc.fileKey).then(b => {
                                                 e.target.disabled = false;
                                             }).catch(b => {
                                                 e.target.disabled = false;
@@ -442,7 +444,7 @@ function App() {
                                         }}>Download</Button>
 
                                     </Card.Body>
-                                    <Card.Footer className="text-muted">Timestamp Vaule</Card.Footer>
+                                    <Card.Footer className="text-muted">Share Date: {new Date(Number.parseInt(doc.timestamp._hex) * 1000).toDateString()}</Card.Footer>
                                 </Card>
                             </div>))}
                         </Row>
