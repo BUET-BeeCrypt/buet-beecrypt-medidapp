@@ -1,3 +1,6 @@
+
+![image](https://github.com/user-attachments/assets/41e15032-34a3-4a8e-94e4-b6cd56a60817)
+
 # How to run the project
 ```
 cd contract
